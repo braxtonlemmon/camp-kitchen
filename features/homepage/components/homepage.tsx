@@ -17,6 +17,12 @@ export default function Homepage() {
             switch (part.type) {
               case "text":
                 return <div key={`${message.id}-${i}`}>{part.text}</div>;
+              case "tool-generatePackingList":
+                if (part.state === "output-available" && part.output) {
+                  console.log("tag output", part.output);
+                }
+              default:
+                return null;
             }
           })}
         </div>

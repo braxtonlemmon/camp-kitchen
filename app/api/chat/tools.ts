@@ -1,7 +1,23 @@
 import { tool } from "ai";
 import { z } from "zod";
 
-const packingListSchema = z.object({
+const unitEnum = z.enum([
+  "g",
+  "kg",
+  "oz",
+  "lb",
+  "ml",
+  "l",
+  "tsp",
+  "tbsp",
+  "cup",
+  "unit",
+  "can",
+  "pack",
+  "piece",
+]);
+
+export const packingListSchema = z.object({
   trip: z.object({
     durationDays: z
       .number()
@@ -22,16 +38,42 @@ const packingListSchema = z.object({
         'The cooking method(s) availabe to the group, e.g. "campfire", "charcoal", "camp stove", etc.',
       ),
   }),
-  meals: z.array(
-    z.object({
-      name: z.string(),
-      category: z
-        .enum(["breakfast", "lunch", "dinner", "snack"])
-        .describe(
-          'Meals should be categorized as "breakfast", "lunch", "dinner", or "snack".',
-        ),
-    }),
-  ),
+  meals: z
+    .array(
+      z.object({
+        name: z.string(),
+        category: z
+          .enum(["breakfast", "lunch", "dinner", "snack"])
+          .describe(
+            'Meals should be categorized as "breakfast", "lunch", "dinner", or "snack".',
+          ),
+        ingredients: z
+          .array(
+            z.object({
+              name: z
+                .string()
+                .describe(
+                  "Canonical, lowercase, singular ingredient name, e.g. 'yellow onion'. Use the exact same name every time the ingredient appears in any meal.",
+                ),
+              amount: z
+                .number()
+                .describe(
+                  "Total amount needed for the WHOLE group for this meal, not per person.",
+                ),
+              unit: unitEnum,
+            }),
+          )
+          .describe("The ingredients needed for the meal."),
+        steps: z
+          .array(z.string())
+          .describe(
+            "The steps needed to prepare the meal. Use an empty array if no preparation or cooking is required (e.g. trail mix, fruit).",
+          ),
+      }),
+    )
+    .describe(
+      "Every meal the group will eat. If the same meal is eaten more than once, list it once per occurrence so quantities add up correctly.",
+    ),
   cookingGear: z.array(
     z
       .object({
@@ -42,17 +84,9 @@ const packingListSchema = z.object({
         "The cookingGear array should contain the cooking equipment needed for the meals, with realistic quantities based on trip length and group size.",
       ),
   ),
-  ingredients: z.array(
-    z
-      .object({
-        name: z.string(),
-        quantity: z.string(),
-      })
-      .describe(
-        "The ingredients array should contain all food ingredients needed to prepare the meals, with quantities scaled to the number of people and days.",
-      ),
-  ),
 });
+
+export type PackingList = z.infer<typeof packingListSchema>;
 
 export const generatePackingList = tool({
   description:

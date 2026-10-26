@@ -2,9 +2,12 @@
 import { useChat } from "@ai-sdk/react";
 import { useState } from "react";
 
+import PackingList from "@/features/homepage/components/packing-list";
+import { ChatMessage } from "@/features/homepage/types/chat-message";
+
 export default function Homepage() {
   const [userInput, setUserInput] = useState("");
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status } = useChat<ChatMessage>();
 
   const isLoading = status === "streaming" || status === "submitted";
 
@@ -19,8 +22,9 @@ export default function Homepage() {
                 return <div key={`${message.id}-${i}`}>{part.text}</div>;
               case "tool-generatePackingList":
                 if (part.state === "output-available" && part.output) {
-                  console.log("tag output", part.output);
+                  return <PackingList key={`${message.id}-${i}`} part={part} />;
                 }
+                return null;
               default:
                 return null;
             }
